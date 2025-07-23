@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app import models, schemas
-from .auth import get_password_hash
 
-async def get_user_by_email(db: AsyncSession, email: str):
-    result = await db.execute(select(models.User).filter(models.User.email == email))
+from app import models, schemas
+from app.auth import get_password_hash
+
+async def get_user(db: AsyncSession, user_id: int):
+    result = await db.execute(select(models.User).filter(models.User.id == user_id))
     return result.scalars().first()
 
 async def create_user(db: AsyncSession, user: schemas.UserCreate):

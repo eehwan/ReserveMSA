@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import crud, models, schemas
-from app.database import engine, get_db
+from app import models
+from app.database import engine
+from app.routers import users, auth
 
 app = FastAPI()
 
@@ -11,9 +12,5 @@ async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
 
-@app.post("/users/", response_model=schemas.User)
-async def create_user(user: schemas.UserCreate, db: AsyncSession = Depends(get_db)):
-    db_user = await crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return await crud.create_user(db=db, user=user)
+app.include_router(users.router, prefix="/api/users", tags=["users"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
