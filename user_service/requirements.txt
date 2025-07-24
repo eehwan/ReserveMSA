@@ -2,5 +2,7 @@ fastapi
 uvicorn[standard]
 SQLAlchemy[asyncio]
 asyncpg
+pydantic[email]
 pydantic-settings
 passlib[bcrypt]
+python-jose[cryptography]
