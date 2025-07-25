@@ -11,7 +11,7 @@ from app import crud, schemas
 from app.config import settings
 from app.database import get_db
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/auth")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

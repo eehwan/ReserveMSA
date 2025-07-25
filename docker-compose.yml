@@ -28,16 +28,11 @@ services:
     env_file:
       - .env
     volumes:
-      - ReserveMSA_psql:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes --notify-keyspace-events KEA
-    ports:
-      - "6379:6379"
-    volumes:
-      - ReserveMSA_redis:/data
 
   user_service:
     build:
@@ -59,17 +54,3 @@ services:
       - "80:80"
     depends_on:
       - user_service
-
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    
-    ports:
-      - "16686:16686"
-      - "6831:6831/udp"
-    environment:
-      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
-      - JAEGER_UI_BASE_PATH=/jaeger
-
-volumes:
-  ReserveMSA_psql:
-  ReserveMSA_redis:

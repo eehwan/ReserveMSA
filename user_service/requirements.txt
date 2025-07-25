@@ -4,5 +4,6 @@ SQLAlchemy[asyncio]
 asyncpg
 pydantic[email]
 pydantic-settings
-passlib[bcrypt]
+passlib
+bcrypt==4.0.1
 python-jose[cryptography]

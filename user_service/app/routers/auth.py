@@ -9,7 +9,7 @@ from app.database import get_db
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.Token)
+@router.post("", response_model=schemas.Token)
 async def login_for_access_token(
     user_credentials: schemas.UserLogin, db: AsyncSession = Depends(get_db)
 ):
