@@ -28,29 +28,29 @@ services:
     env_file:
       - .env
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes --notify-keyspace-events KEA
 
-  user_service:
+  user-service:
     build:
-      context: .
+      context: ./services
       dockerfile: ./Dockerfile.python
       args:
-        SERVICE_NAME: user_service
+        SERVICE_NAME: user-service
     env_file:
       - .env
     volumes:
-      - ./user_service/app:/app/app
+      - ./services/user-service/app:/app/app
     depends_on:
       - postgreSQL
       - kafka
 
   nginx:
-    build: ./nginx
+    build: ./infra/nginx
     ports:
       - "80:80"
     depends_on:
-      - user_service
+      - user-service
