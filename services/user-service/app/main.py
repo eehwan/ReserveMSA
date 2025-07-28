@@ -1,16 +1,13 @@
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import models
-from app.database import engine
-from app.routers import users, auth
+from app.db.session import init_db
+from app.api.v1.endpoints import users, auth
 
 app = FastAPI(root_path="/user")
 
 @app.on_event("startup")
 async def startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(models.Base.metadata.create_all)
+    await init_db()
 
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
