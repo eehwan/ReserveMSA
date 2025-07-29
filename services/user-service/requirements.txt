@@ -1,3 +1,4 @@
+# Production Dependencies
 fastapi
 uvicorn[standard]
 SQLAlchemy[asyncio]
@@ -7,3 +8,11 @@ pydantic-settings
 passlib
 bcrypt==4.0.1
 python-jose[cryptography]
+
+# Development/Test Dependencies
+pytest
+pytest_asyncio
+httpx
+trio
+asgi-lifespan
+psycopg2-binary

@@ -43,7 +43,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./services/user-service/app:/app/app
+      - ./services/user-service/:/app
     depends_on:
       - postgreSQL
       - kafka
