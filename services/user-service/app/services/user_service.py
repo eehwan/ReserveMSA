@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.repositories.user_repository import UserRepository
-from app.api.v1.schemas.user_schemas import UserCreate, User
+from app.db.repositories import UserRepository
+from app.api.v1.schemas import UserCreate, User
 
 class UserService:
     def __init__(self, db: AsyncSession):

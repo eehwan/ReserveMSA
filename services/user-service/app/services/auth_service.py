@@ -2,8 +2,8 @@ from datetime import timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.repositories.user_repository import UserRepository
-from app.api.v1.schemas.auth_schemas import UserLogin, Token
+from app.db.repositories import UserRepository
+from app.api.v1.schemas import UserLogin, Token
 from app.core import security
 from app.core.config import settings
 

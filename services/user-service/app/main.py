@@ -9,7 +9,7 @@ async def lifespan(app: FastAPI):
     await init_db()
     yield
 
-app = FastAPI(root_path="/user", lifespan=lifespan)
+app = FastAPI(root_path="/api-user", lifespan=lifespan)
 
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
