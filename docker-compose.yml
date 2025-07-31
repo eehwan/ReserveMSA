@@ -55,8 +55,25 @@ services:
       - .env
     volumes:
       - ./services/user-service/:/app
+      - ./libs:/app/libs
     depends_on:
       - postgreSQL
+
+  event-service:
+    build:
+      context: ./services
+      dockerfile: ./Dockerfile.python
+      args:
+        SERVICE_NAME: event-service
+    env_file:
+      - .env
+    volumes:
+      - ./services/event-service/:/app
+      - ./libs:/app/libs
+    depends_on:
+      - postgreSQL
+      - kafka1
+      - kafka2
 
   nginx:
     build: ./infra/nginx
