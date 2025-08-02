@@ -75,6 +75,20 @@ services:
       - kafka1
       - kafka2
 
+  reservation-service:
+    build:
+      context: ./services
+      dockerfile: ./Dockerfile.python
+      args:
+        SERVICE_NAME: reservation-service
+    env_file:
+      - .env
+    volumes:
+      - ./services/reservation-service/:/app
+      - ./libs:/app/libs
+    depends_on:
+      - redis
+
   nginx:
     build: ./infra/nginx
     ports:

@@ -1,0 +1,15 @@
+# Production Dependencies
+fastapi
+uvicorn[standard]
+pydantic-settings
+redis
+aiokafka
+celery
+
+# Development/Test Dependencies
+pytest
+pytest_asyncio
+httpx
+trio
+asgi-lifespan
+psycopg2-binary
