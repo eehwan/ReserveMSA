@@ -9,7 +9,7 @@ async def test_create_user(client: httpx.AsyncClient):
     새로운 사용자를 생성하는 API 엔드포인트를 테스트합니다.
     """
     response = await client.post(
-        "/user/users/",
+        "/api-user/users/",
         json={
             "email": "test@example.com",
             "password": "testpassword"
@@ -27,7 +27,7 @@ async def test_login_for_access_token(client: httpx.AsyncClient):
     """
     # 사용자 생성
     response_create = await client.post(
-        "/user/users/",
+        "/api-user/users/",
         json={
             "email": "test@example.com",
             "password": "testpassword"
@@ -36,7 +36,7 @@ async def test_login_for_access_token(client: httpx.AsyncClient):
     assert response_create.status_code == 201
 
     response = await client.post(
-        "/user/auth/",
+        "/api-user/auth/",
         json={
             "email": "test@example.com",
             "password": "testpassword"
@@ -54,7 +54,7 @@ async def test_read_users_me(client: httpx.AsyncClient):
     """
     # 사용자 생성
     response_create = await client.post(
-        "/user/users/",
+        "/api-user/users/",
         json={
             "email": "test@example.com",
             "password": "testpassword"
@@ -63,7 +63,7 @@ async def test_read_users_me(client: httpx.AsyncClient):
     assert response_create.status_code == 201
 
     login_response = await client.post(
-        "/user/auth/",
+        "/api-user/auth/",
         json={
             "email": "test@example.com",
             "password": "testpassword"
@@ -71,7 +71,7 @@ async def test_read_users_me(client: httpx.AsyncClient):
     )
     token = login_response.json()["access_token"]
     response = await client.get(
-        "/user/users/me",
+        "/api-user/users/me",
         headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 200
