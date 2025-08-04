@@ -1,0 +1,7 @@
+-r requirements-prod.txt
+pytest
+pytest_asyncio
+httpx
+trio
+asgi-lifespan
+psycopg2-binary

@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy[asyncio]
+asyncpg
+pydantic[email]
+pydantic-settings
+aiokafka
+gunicorn

@@ -1,0 +1,31 @@
+FROM python:3.11-slim
+
+ARG SERVICE_NAME
+
+ENV SERVICE_NAME=${SERVICE_NAME}
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app:/app/libs
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+# 프로덕션용 최적화
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY ${SERVICE_NAME}/requirements-prod.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /app/requirements.txt
+
+# 소스 코드 복사
+COPY ${SERVICE_NAME}/ /app/
+COPY libs /app/libs
+
+# 비root 사용자로 실행
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# 프로덕션용 설정: 리로드 없음, 워커 프로세스, info 로그
+CMD ["gunicorn", "app.main:app", "--bind", "0.0.0.0:8000", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--log-level", "info"]

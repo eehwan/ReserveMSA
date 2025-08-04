@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+redis
+aiokafka
+celery
+python-jose[cryptography]
+passlib[bcrypt]
+jose
+gunicorn

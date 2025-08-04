@@ -6,6 +6,7 @@ services:
     container_name: zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+    restart: unless-stopped
 
   kafka1:
     image: bitnami/kafka:3.4.0
@@ -19,6 +20,10 @@ services:
       - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka1:9092
       - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=2
+    volumes:
+      - kafka1_data:/bitnami/kafka  # Kafka 로그 영속성
+    restart: unless-stopped
+    
   kafka2:
     image: bitnami/kafka:3.4.0
     depends_on:
@@ -31,6 +36,9 @@ services:
       - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9093
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka2:9093
       - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=2
+    volumes:
+      - kafka2_data:/bitnami/kafka  # Kafka 로그 영속성
+    restart: unless-stopped
 
   postgreSQL:
     image: postgres:13
@@ -40,66 +48,73 @@ services:
       - .env
     volumes:
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"  # 개발용 포트 노출
+      - postgres_data:/var/lib/postgresql/data  # 프로덕션 데이터 영속성
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes --notify-keyspace-events KEA
-    ports:
-      - "6379:6379"  # 개발용 포트 노출
+    volumes:
+      - redis_data:/data  # 프로덕션 데이터 영속성
+    restart: unless-stopped
 
   user-service:
     build:
-      context: ./services
-      dockerfile: ./Dockerfile.dev
+      context: ./
+      dockerfile: ./services/Dockerfile.prod
       args:
         SERVICE_NAME: user-service
     env_file:
       - .env
-    volumes:
-      - ./services/user-service/:/app
-      - ./libs:/app/libs
-    ports:
-      - "8001:8000"  # 개발용 직접 접근
     depends_on:
       - postgreSQL
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   event-service:
     build:
-      context: ./services
-      dockerfile: ./Dockerfile.dev
+      context: ./
+      dockerfile: ./services/Dockerfile.prod
       args:
         SERVICE_NAME: event-service
     env_file:
       - .env
-    volumes:
-      - ./services/event-service/:/app
-      - ./libs:/app/libs
-    ports:
-      - "8002:8000"  # 개발용 직접 접근
     depends_on:
       - postgreSQL
       - kafka1
       - kafka2
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   reservation-service:
     build:
-      context: ./services
-      dockerfile: ./Dockerfile.dev
+      context: ./
+      dockerfile: ./services/Dockerfile.prod
       args:
         SERVICE_NAME: reservation-service
     env_file:
       - .env
-    volumes:
-      - ./services/reservation-service/:/app
-      - ./libs:/app/libs
-    ports:
-      - "8003:8000"  # 개발용 직접 접근
     depends_on:
       - redis
       - kafka1
       - kafka2
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   nginx:
     build: ./infra/nginx
@@ -109,3 +124,10 @@ services:
       - user-service
       - event-service
       - reservation-service
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  kafka1_data:
+  kafka2_data:
