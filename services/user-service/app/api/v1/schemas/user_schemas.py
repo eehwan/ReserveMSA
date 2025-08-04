@@ -8,6 +8,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
+    role: str
 
     class Config:
         from_attributes = True

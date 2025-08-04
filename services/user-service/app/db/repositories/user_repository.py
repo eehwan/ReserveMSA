@@ -9,7 +9,7 @@ class UserRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_user(self, user_id: int) -> User | None:
+    async def get_user_by_id(self, user_id: int) -> User | None:
         result = await self.db.execute(select(User).filter(User.id == user_id))
         return result.scalars().first()
 

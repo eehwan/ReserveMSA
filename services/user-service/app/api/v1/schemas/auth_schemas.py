@@ -8,5 +8,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-class TokenData(BaseModel):
-    email: EmailStr | None = None
+class TokenPayload(BaseModel):
+    sub: str
+    email: str | None = None
+    role: str | None = None

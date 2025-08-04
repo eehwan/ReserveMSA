@@ -1,2 +1,2 @@
-from .auth_schemas import Token, TokenData, UserLogin
+from .auth_schemas import UserLogin, Token, TokenPayload
 from .user_schemas import User, UserCreate

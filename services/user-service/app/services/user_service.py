@@ -10,7 +10,7 @@ class UserService:
         return await self.user_repo.create_user(user_data)
 
     async def get_user_by_id(self, user_id: int) -> User | None:
-        return await self.user_repo.get_user(user_id)
+        return await self.user_repo.get_user_by_id(user_id)
 
     async def get_user_by_email(self, email: str) -> User | None:
         return await self.user_repo.get_user_by_email(email)
