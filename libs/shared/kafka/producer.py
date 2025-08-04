@@ -2,11 +2,12 @@ import asyncio
 import json
 import logging
 from aiokafka import AIOKafkaProducer
+from aiokafka.errors import KafkaConnectionError
 
 logger = logging.getLogger(__name__)
 
 class KafkaProducer:
-    def __init__(self, bootstrap_servers: str, max_retries: int = 20, retry_delay: int = 10):
+    def __init__(self, bootstrap_servers: str, max_retries: int = 20, retry_delay: int = 5):
         self.bootstrap_servers = bootstrap_servers
         self._producer = None
         self.max_retries = max_retries
@@ -21,11 +22,12 @@ class KafkaProducer:
             )
 
         for attempt in range(self.max_retries):
+            logger.info(f"Kafka producer start attempt {attempt + 1}/{self.max_retries}")
             try:
                 await self._producer.start()
                 logger.info("Kafka producer started successfully.")
                 break
-            except Exception as e:
+            except KafkaConnectionError as e: # Catch specific KafkaConnectionError
                 logger.warning(
                     f"Attempt {attempt + 1}/{self.max_retries}: "
                     f"Failed to start Kafka producer: {e}. "
@@ -35,6 +37,9 @@ class KafkaProducer:
                     logger.error(f"Could not start Kafka producer after {self.max_retries} attempts.")
                     raise
                 await asyncio.sleep(self.retry_delay)
+            except Exception as e: # Catch other unexpected exceptions
+                logger.error(f"An unexpected error occurred during Kafka producer startup: {e}")
+                raise # Re-raise unexpected exceptions
 
     async def stop(self):
         if self._producer:

@@ -16,7 +16,7 @@ class KafkaConsumerWorker:
         event_model: Type[BaseModel],
         handler: Callable[[BaseModel], None],
         max_retries: int = 20,
-        retry_delay: int = 10,
+        retry_delay: int = 5,
     ):
         self.topic = topic
         self.bootstrap_servers = bootstrap_servers
