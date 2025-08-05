@@ -21,8 +21,8 @@ class EventUpdate(BaseModel):
 
 class Event(EventBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None       # 임시로 Optional 처리
+    updated_at: Optional[datetime] = None       # 임시로 Optional 처리
 
     class Config:
         from_attributes = True

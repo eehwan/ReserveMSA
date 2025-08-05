@@ -28,11 +28,20 @@ class SeatRepository:
         await self.db.refresh(db_seat)
         return db_seat
 
-    async def update_seat_status(self, seat_id: int, status: SeatStatus) -> Seat | None:
-        query = update(Seat).where(Seat.id == seat_id).values(status=status)
-        await self.db.execute(query)
+    async def update_seat_status(self, seat_id: int, new_status: SeatStatus, expected_status: SeatStatus | None = None, user_id: int | None = None, lock_key: str | None = None) -> int:
+        update_data = {"status": new_status}
+        if user_id is not None:
+            update_data["user_id"] = user_id
+        if lock_key is not None:
+            update_data["lock_key"] = lock_key
+        
+        query = update(Seat).where(Seat.id == seat_id)
+        if expected_status is not None:
+            query = query.where(Seat.status == expected_status)
+
+        result = await self.db.execute(query.values(**update_data))
         await self.db.commit()
-        return await self.get_seat(seat_id)
+        return result.rowcount
 
     async def update_seat(self, seat_id: int, seat: SeatUpdate) -> Seat | None:
         query = update(Seat).where(Seat.id == seat_id).values(**seat.dict(exclude_unset=True))

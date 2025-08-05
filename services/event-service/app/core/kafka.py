@@ -1,70 +1,45 @@
-# event-service/app/core/kafka.py
-import asyncio
-import logging
-from shared.kafka.consumer import KafkaConsumerWorker
-from shared.kafka.topics import (
-    TOPICS,
-    SeatReservedEvent,
-    ReservationConfirmedEvent,
-    PaymentCompletedEvent,
-)
+# Core kafka infrastructure only  
+from shared.kafka.producer import KafkaProducer
+from shared.kafka.consumer import BaseKafkaConsumerManager
 from shared.config import settings
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Producer instance management
+kafka_producer_instance = None
 
-# -- Kafka Event Handlers ----------------------------------------------------
+async def get_kafka_producer_instance():
+    global kafka_producer_instance
+    if kafka_producer_instance is None:
+        kafka_producer_instance = KafkaProducer(bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS)
+        await kafka_producer_instance.start()
+    return kafka_producer_instance
 
-async def handle_seat_reserved(event: SeatReservedEvent):
-    logger.info(f"[Seat Reserved] Reservation: {event.reservation_id}, Seat: {event.seat_id}, User: {event.user_id}")
-    # TODO: Implement logic to change seat status to 'allocated'
+async def start_kafka_producer():
+    await get_kafka_producer_instance()
 
-async def handle_reservation_confirmed(event: ReservationConfirmedEvent):
-    logger.info(f"[Reservation Confirmed] Reservation: {event.reservation_id}")
-    # TODO: Implement logic to change seat status to 'sold'
+async def close_kafka_producer_instance():
+    global kafka_producer_instance
+    if kafka_producer_instance:
+        await kafka_producer_instance.stop()
+        kafka_producer_instance = None
 
-async def handle_payment_completed(event: PaymentCompletedEvent):
-    logger.info(f"[Payment Completed] Reservation: {event.reservation_id}, Payment: {event.payment_id}")
-    # TODO: Implement logic to change seat status to 'sold' (idempotently)
+# Consumer instance management
+consumer_manager: BaseKafkaConsumerManager = None
 
-# -- Consumer Setup ----------------------------------------------------------
+async def initialize_consumer_manager(topic_handlers: dict):
+    global consumer_manager
+    if consumer_manager is not None:
+        return
 
-CONSUMER_CONFIGS = [
-    {
-        "topic_key": "seat_reserved",
-        "handler": handle_seat_reserved,
-    },
-    {
-        "topic_key": "reservation_confirmed",
-        "handler": handle_reservation_confirmed,
-    },
-    {
-        "topic_key": "payment_completed",
-        "handler": handle_payment_completed,
-    },
-]
-
-consumer_tasks = []
+    consumer_manager = BaseKafkaConsumerManager(
+        topic_handlers=topic_handlers,
+        group_id="event-service-group",
+        bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
+    )
 
 async def start_kafka_consumers():
-    bootstrap_servers = settings.KAFKA_BOOTSTRAP_SERVERS
-    group_id = "event-service-group"
-
-    for config in CONSUMER_CONFIGS:
-        topic_info = TOPICS[config["topic_key"]]
-        worker = KafkaConsumerWorker(
-            topic=topic_info["topic"],
-            bootstrap_servers=bootstrap_servers,
-            group_id=group_id,
-            event_model=topic_info["schema"],
-            handler=config["handler"],
-        )
-        task = asyncio.create_task(worker.start())
-        consumer_tasks.append(task)
-    logger.info(f"Started {len(consumer_tasks)} Kafka consumer workers.")
+    if consumer_manager:
+        await consumer_manager.start()
 
 async def stop_kafka_consumers():
-    for task in consumer_tasks:
-        task.cancel()
-    await asyncio.gather(*consumer_tasks, return_exceptions=True)
-    logger.info("All Kafka consumer workers stopped.")
+    if consumer_manager:
+        await consumer_manager.stop()

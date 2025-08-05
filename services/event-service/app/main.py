@@ -1,19 +1,44 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from app.core.kafka import start_kafka_consumers, stop_kafka_consumers
-from app.db.session import init_db
+from app.core.kafka import (
+    start_kafka_producer,
+    close_kafka_producer_instance, 
+    get_kafka_producer_instance,
+    initialize_consumer_manager,
+    start_kafka_consumers,
+    stop_kafka_consumers
+)
+from app.events.handlers import EventHandler
+from app.db.session import init_db, get_db
+
 from app.api.v1.endpoints.events import router as events_router
 from app.api.v1.endpoints.seats import router as seats_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    await start_kafka_producer()
+
+    kafka_producer_instance = await get_kafka_producer_instance()
+    
+    # Create event handler and topic handlers
+    event_handler = EventHandler(kafka_producer_instance, get_db)
+    topic_handlers = {
+        "seat_lock": event_handler.handle_seat_lock,
+        "seat_unlock": event_handler.handle_seat_unlock,
+        "seat_sold": event_handler.handle_seat_sold,
+        "payment_timeout": event_handler.handle_payment_timeout,
+    }
+    
+    await initialize_consumer_manager(topic_handlers)
     await start_kafka_consumers()
     yield
     await stop_kafka_consumers()
+    await close_kafka_producer_instance()
 
-app = FastAPI(root_path="/event", lifespan=lifespan)
+
+app = FastAPI(root_path="/api-event", lifespan=lifespan)
 
 app.include_router(events_router, prefix="/events", tags=["events"])
 app.include_router(seats_router, prefix="/seats", tags=["seats"])
