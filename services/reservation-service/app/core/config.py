@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     SEAT_RESERVATION_TIMEOUT: int = 300
+    KAFKA_BOOTSTRAP_SERVERS: str
     
     @property
     def REDIS_URL(self) -> str:

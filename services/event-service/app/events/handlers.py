@@ -31,7 +31,7 @@ class EventHandler:
 
     async def handle_seat_lock(self, event: SeatLockEvent):
         logger.info(f"[Seat Lock] Event: {event.event_id}, Seat: {event.seat_num}, User: {event.user_id}")
-        async with self.db_session_factory() as db_session:
+        async for db_session in self.db_session_factory():
             seat_service = SeatService(db_session)
             try:
                 # DB 상태를 ALLOCATED로 변경 시도
@@ -71,21 +71,21 @@ class EventHandler:
 
     async def handle_seat_unlock(self, event: SeatUnlockEvent):
         logger.info(f"[Seat Unlock] Event: {event.event_id}, Seat: {event.seat_num}, Lock Key: {event.lock_key}")
-        async with self.db_session_factory() as db_session:
+        async for db_session in self.db_session_factory():
             seat_service = SeatService(db_session)
             # DB 상태를 ALLOCATED → AVAILABLE로 변경
             await seat_service.release_seat(event.event_id, event.seat_num, event.lock_key)
 
     async def handle_seat_sold(self, event: SeatSoldEvent):
         logger.info(f"[Seat Sold] Event: {event.event_id}, Seat: {event.seat_num}, Payment: {event.payment_id}")
-        async with self.db_session_factory() as db_session:
+        async for db_session in self.db_session_factory():
             seat_service = SeatService(db_session)
             # DB 상태를 SOLD로 변경
             await seat_service.sell_seat(event.event_id, event.seat_num, event.payment_id)
 
     async def handle_payment_timeout(self, event: PaymentTimeoutEvent):
         logger.info(f"[Payment Timeout] Event: {event.event_id}, Seat: {event.seat_num}")
-        async with self.db_session_factory() as db_session:
+        async for db_session in self.db_session_factory():
             seat_service = SeatService(db_session)
             # DB 상태를 ALLOCATED → AVAILABLE로 변경
             await seat_service.release_seat(event.event_id, event.seat_num, event.lock_key)

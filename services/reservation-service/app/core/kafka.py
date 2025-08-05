@@ -1,7 +1,6 @@
-# Core kafka infrastructure only
 from shared.kafka.producer import KafkaProducer
 from shared.kafka.consumer import BaseKafkaConsumerManager
-from shared.config import settings
+from app.core.config import settings
 
 # Producer instance management
 kafka_producer_instance = None

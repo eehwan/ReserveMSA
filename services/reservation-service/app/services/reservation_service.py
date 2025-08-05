@@ -22,7 +22,7 @@ class ReservationService:
         If it fails, it produces a message to the "seat.lock-failed" topic.
         """
         redis_key = f"seat:{event_id}:{seat_num}"
-        lock_value = str(uuid.uuid4())
+        lock_value = f"{user_id}:{uuid.uuid4()}"
         
         is_lock_acquired = await self.redis_client.set(
             redis_key, lock_value, nx=True, ex=settings.SEAT_RESERVATION_TIMEOUT
@@ -73,6 +73,14 @@ class ReservationService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Reservation not found or already released.",
             )
+        
+        # 권한 체크: 본인의 예약인지 확인
+        lock_value_str = str(lock_value)
+        if not lock_value_str.startswith(f"{user_id}:"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot cancel other user's reservation.",
+            )
 
         try:
             # Delete the Redis lock
@@ -82,7 +90,7 @@ class ReservationService:
             await self.event_publisher.publish_seat_unlock(
                 event_id=event_id,
                 seat_num=seat_num,
-                lock_key=lock_value.decode('utf-8')  # Redis returns bytes, decode to string
+                lock_key=lock_value_str
             )
             
         except Exception as e:

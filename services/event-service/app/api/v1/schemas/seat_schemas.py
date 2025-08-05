@@ -19,6 +19,8 @@ class SeatUpdate(BaseModel):
 
 class Seat(SeatBase):
     id: int
+    user_id: Optional[int] = None
+    lock_key: Optional[str] = None
 
     class Config:
         from_attributes = True
