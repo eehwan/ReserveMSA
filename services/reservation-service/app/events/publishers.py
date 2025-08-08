@@ -12,13 +12,15 @@ class ReservationEventPublisher:
     def __init__(self, kafka_producer: KafkaProducer):
         self.kafka_producer = kafka_producer
     
-    async def publish_seat_lock(self, user_id: int, event_id: int, seat_num: str, lock_key: str):
+    async def publish_seat_lock(self, reservation_id: str, user_id: int, event_id: int, seat_num: str, lock_key: str, expires_at: datetime):
         """좌석 선점 성공 이벤트 발행"""
         event = SeatLockEvent(
+            reservation_id=reservation_id,
             user_id=user_id,
             event_id=event_id,
             seat_num=seat_num,
             lock_key=lock_key,
+            expires_at=expires_at,
             timestamp=datetime.utcnow(),
         )
         await self.kafka_producer.send(

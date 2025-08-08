@@ -8,10 +8,12 @@ from typing import Literal
 
 class SeatLockEvent(BaseModel):
     event_type: Literal["seat.lock"] = "seat.lock"
+    reservation_id: str
     user_id: int
     event_id: int
     seat_num: str
     lock_key: str
+    expires_at: datetime
     timestamp: datetime
     version: str = "1.0"
 
@@ -69,25 +71,30 @@ class PaymentRequestedEvent(BaseModel):
     version: str = "1.0"
 
 
-class PaymentSuccessfulEvent(BaseModel):
-    event_type: Literal["payment.successful"] = "payment.successful"
-    user_id: int
-    event_id: int
-    seat_num: str
-    payment_id: str
-    amount: float
-    lock_key: str
+class PaymentVerifiedEvent(BaseModel):
+    event_type: Literal["payment.verified"] = "payment.verified"
+    payment_key: str
+    reservation_id: str
+    amount: int
+    approved_at: datetime
     timestamp: datetime
     version: str = "1.0"
 
 
-class PaymentFailedEvent(BaseModel):
-    event_type: Literal["payment.failed"] = "payment.failed"
-    user_id: int
-    event_id: int
-    seat_num: str
-    reason: str  # "insufficient_funds" | "card_declined" | "timeout"
-    lock_key: str
+class PaymentRejectedEvent(BaseModel):
+    event_type: Literal["payment.rejected"] = "payment.rejected"
+    payment_key: str
+    reservation_id: str
+    failure_reason: str
+    timestamp: datetime
+    version: str = "1.0"
+
+
+class PaymentCancelEvent(BaseModel):
+    event_type: Literal["payment.cancel"] = "payment.cancel"
+    payment_key: str
+    reservation_id: str
+    reason: str
     timestamp: datetime
     version: str = "1.0"
 
@@ -134,13 +141,17 @@ TOPICS = {
         "topic": "payment-requested",
         "schema": PaymentRequestedEvent,
     },
-    "payment_successful": {
-        "topic": "payment-successful",
-        "schema": PaymentSuccessfulEvent,
+    "payment_verified": {
+        "topic": "payment-verified",
+        "schema": PaymentVerifiedEvent,
     },
-    "payment_failed": {
-        "topic": "payment-failed",
-        "schema": PaymentFailedEvent,
+    "payment_rejected": {
+        "topic": "payment-rejected",
+        "schema": PaymentRejectedEvent,
+    },
+    "payment_cancel": {
+        "topic": "payment-cancel",
+        "schema": PaymentCancelEvent,
     },
     "payment_timeout": {
         "topic": "payment-timeout",

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from redis.asyncio import Redis
 from aiokafka import AIOKafkaProducer
 
-from app.api.v1.schemas.reservation_schemas import ReservationRequest
+from app.api.v1.schemas.reservation_schemas import ReservationRequest, ReservationResponse, ReservationStatusResponse
 from app.services.reservation_service import ReservationService
 from app.dependencies.auth import get_token_payload
 from app.api.v1.schemas.auth_schemas import TokenPayload
@@ -11,7 +11,7 @@ from app.core.kafka import get_kafka_producer_instance
 
 router = APIRouter()
 
-@router.post("/", status_code=202)
+@router.post("/", response_model=ReservationResponse, status_code=201)
 async def reserve_seat(
     reservation_request: ReservationRequest,
     payload: TokenPayload = Depends(get_token_payload),
@@ -21,12 +21,12 @@ async def reserve_seat(
     reservation_service = ReservationService(redis_client, kafka_producer) # Instantiate with injected clients
     try:
         user_id = int(payload.sub)
-        await reservation_service.reserve_seat(
+        reservation = await reservation_service.reserve_seat(
             user_id=user_id,
             event_id=reservation_request.event_id,
             seat_num=reservation_request.seat_num,
         )
-        return {"message": "Reservation request accepted and being processed."}
+        return reservation
     except HTTPException as e:
         raise e
     except Exception as e:
