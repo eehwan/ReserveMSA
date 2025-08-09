@@ -73,7 +73,7 @@ services:
       resources:
         limits:
           memory: 512M
-        reservations:
+        orders:
           memory: 256M
 
   event-service:
@@ -93,15 +93,15 @@ services:
       resources:
         limits:
           memory: 512M
-        reservations:
+        orders:
           memory: 256M
 
-  reservation-service:
+  order-service:
     build:
       context: ./
       dockerfile: ./services/Dockerfile.prod
       args:
-        SERVICE_NAME: reservation-service
+        SERVICE_NAME: order-service
     env_file:
       - .env
     depends_on:
@@ -113,7 +113,7 @@ services:
       resources:
         limits:
           memory: 512M
-        reservations:
+        orders:
           memory: 256M
 
   nginx:
@@ -123,7 +123,7 @@ services:
     depends_on:
       - user-service
       - event-service
-      - reservation-service
+      - order-service
     restart: unless-stopped
 
 volumes:

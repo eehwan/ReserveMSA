@@ -83,16 +83,16 @@ services:
       - kafka1
       - kafka2
 
-  reservation-service:
+  order-service:
     build:
       context: ./services
       dockerfile: ./Dockerfile.dev
       args:
-        SERVICE_NAME: reservation-service
+        SERVICE_NAME: order-service
     env_file:
       - .env
     volumes:
-      - ./services/reservation-service/:/app
+      - ./services/order-service/:/app
       - ./libs:/app/libs
     ports:
       - "8003:8000"  # 개발용 직접 접근
@@ -108,4 +108,4 @@ services:
     depends_on:
       - user-service
       - event-service
-      - reservation-service
+      - order-service
