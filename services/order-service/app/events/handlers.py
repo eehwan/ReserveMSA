@@ -12,7 +12,7 @@ from shared.kafka.topics import (
 
 logger = logging.getLogger(__name__)
 
-class ReservationEventHandler:
+class OrderEventHandler:
     def __init__(
         self,
         kafka_producer: KafkaProducer,

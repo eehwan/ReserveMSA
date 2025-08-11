@@ -8,7 +8,7 @@ from typing import Literal
 
 class SeatLockEvent(BaseModel):
     event_type: Literal["seat.lock"] = "seat.lock"
-    reservation_id: str
+    order_id: str
     user_id: int
     event_id: int
     seat_num: str
@@ -74,7 +74,7 @@ class PaymentRequestedEvent(BaseModel):
 class PaymentVerifiedEvent(BaseModel):
     event_type: Literal["payment.verified"] = "payment.verified"
     payment_key: str
-    reservation_id: str
+    order_id: str
     amount: int
     approved_at: datetime
     timestamp: datetime
@@ -84,7 +84,7 @@ class PaymentVerifiedEvent(BaseModel):
 class PaymentRejectedEvent(BaseModel):
     event_type: Literal["payment.rejected"] = "payment.rejected"
     payment_key: str
-    reservation_id: str
+    order_id: str
     failure_reason: str
     timestamp: datetime
     version: str = "1.0"
@@ -93,7 +93,7 @@ class PaymentRejectedEvent(BaseModel):
 class PaymentCancelEvent(BaseModel):
     event_type: Literal["payment.cancel"] = "payment.cancel"
     payment_key: str
-    reservation_id: str
+    order_id: str
     reason: str
     timestamp: datetime
     version: str = "1.0"

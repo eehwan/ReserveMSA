@@ -4,30 +4,35 @@ from fastapi import HTTPException, status
 
 from redis.asyncio import Redis
 from shared.kafka.producer import KafkaProducer
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.events.publishers import ReservationEventPublisher
+from app.db.session import get_db
+from app.events.publishers import OrderEventPublisher
 from app.services.tasks import release_seat_task
-from app.api.v1.schemas.reservation_schemas import ReservationResponse, ReservationStatusResponse
+from app.api.v1.schemas.order_schemas import OrderResponse, OrderStatusResponse
+from app.api.v1.schemas import OrderCreate
+from app.db.repositories import OrderRepository
 
-class ReservationService:
-    def __init__(self, redis_client: Redis, kafka_producer: KafkaProducer):
+class OrderService:
+    def __init__(self, redis_client: Redis, kafka_producer: KafkaProducer, db: AsyncSession):
         self.redis_client = redis_client
-        self.event_publisher = ReservationEventPublisher(kafka_producer)
+        self.event_publisher = OrderEventPublisher(kafka_producer)
+        self.order_repo = OrderRepository(db)
 
-    async def reserve_seat(self, user_id: int, event_id: int, seat_num: str) -> ReservationResponse:
+    async def make_order(self, user_id: int, event_id: int, seat_num: str) -> OrderResponse:
         """
         Attempts to reserve a seat using Redis SETNX for atomicity.
-        If successful, generates reservation_id and returns reservation details.
+        If successful, generates order_id and returns order details.
         """
-        # Generate reservation ID
-        reservation_id = f"res_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:8]}"
+        # Generate order ID
+        order_id = f"res_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:8]}"
         
         redis_key = f"seat:{event_id}:{seat_num}"
-        lock_value = f"{user_id}:{reservation_id}"
+        lock_value = f"{user_id}:{order_id}"
         
         is_lock_acquired = await self.redis_client.set(
-            redis_key, lock_value, nx=True, ex=settings.SEAT_RESERVATION_TIMEOUT
+            redis_key, lock_value, nx=True, ex=settings.SEAT_ORDER_TIMEOUT
         )
         
         if not is_lock_acquired:
@@ -43,10 +48,10 @@ class ReservationService:
             )
             
         try:
-            expires_at = datetime.now() + timedelta(seconds=settings.SEAT_RESERVATION_TIMEOUT)
+            expires_at = datetime.now() + timedelta(seconds=settings.SEAT_ORDER_TIMEOUT)
             
             await self.event_publisher.publish_seat_lock(
-                reservation_id=reservation_id,
+                order_id=order_id,
                 user_id=user_id,
                 event_id=event_id,
                 seat_num=seat_num,
@@ -57,11 +62,11 @@ class ReservationService:
             # Schedule the timeout task with a small buffer
             release_seat_task.apply_async(
                 args=[event_id, seat_num, lock_value],
-                countdown=settings.SEAT_RESERVATION_TIMEOUT + 10
+                countdown=settings.SEAT_ORDER_TIMEOUT + 10
             )
             
-            return ReservationResponse(
-                reservation_id=reservation_id,
+            return OrderResponse(
+                order_id=order_id,
                 event_id=event_id,
                 seat_num=seat_num,
                 expires_at=expires_at,
@@ -72,12 +77,12 @@ class ReservationService:
             await self.redis_client.delete(redis_key)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create reservation: {e}",
+                detail=f"Failed to create order: {e}",
             )
 
-    async def cancel_reservation(self, user_id: int, event_id: int, seat_num: str) -> None:
+    async def cancel_order(self, user_id: int, event_id: int, seat_num: str) -> None:
         """
-        Cancels a reservation and publishes a message to the Kafka "seat.unlock" topic.
+        Cancels a order and publishes a message to the Kafka "seat.unlock" topic.
         """
         redis_key = f"seat:{event_id}:{seat_num}"
         lock_value = await self.redis_client.get(redis_key)
@@ -85,7 +90,7 @@ class ReservationService:
         if not lock_value:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Reservation not found or already released.",
+                detail="Order not found or already released.",
             )
         
         # 권한 체크: 본인의 예약인지 확인
@@ -93,7 +98,7 @@ class ReservationService:
         if not lock_value_str.startswith(f"{user_id}:"):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot cancel other user's reservation.",
+                detail="Cannot cancel other user's order.",
             )
 
         try:
@@ -110,5 +115,5 @@ class ReservationService:
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to cancel reservation or publish unlock event: {e}",
+                detail=f"Failed to cancel order or publish unlock event: {e}",
             )

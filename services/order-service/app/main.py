@@ -9,19 +9,21 @@ from app.core.kafka import (
     start_kafka_consumers,
     stop_kafka_consumers
 )
-from app.events.handlers import ReservationEventHandler
+from app.db.session import init_db
+from app.events.handlers import OrderEventHandler
 from app.core.redis import get_redis_client_instance, close_redis_client_instance
-from app.api.v1.endpoints import reservations
+from app.api.v1.endpoints import orders
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    
+    await init_db()
     await start_kafka_producer()
 
     kafka_producer_instance = await get_kafka_producer_instance()
     redis_client = await get_redis_client_instance()
     
-    # Create event handler and topic handlers
-    event_handler = ReservationEventHandler(kafka_producer_instance, redis_client)
+    event_handler = OrderEventHandler(kafka_producer_instance, redis_client)
     topic_handlers = {
         "seat_lock_rollback": event_handler.handle_seat_lock_rollback,
     }
@@ -31,10 +33,11 @@ async def lifespan(app: FastAPI):
     yield
     await stop_kafka_consumers()
     await close_kafka_producer_instance()
+    await close_redis_client_instance()
 
-app = FastAPI(root_path="/api-reservation", lifespan=lifespan)
+app = FastAPI(root_path="/api-order", lifespan=lifespan)
 
-app.include_router(reservations.router, prefix="/reservations")
+app.include_router(orders.router, prefix="/orders")
 
 @app.get("/health")
 def health_check():

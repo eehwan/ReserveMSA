@@ -31,7 +31,7 @@ async def initialize_consumer_manager(topic_handlers: dict):
 
     consumer_manager = BaseKafkaConsumerManager(
         topic_handlers=topic_handlers,
-        group_id="reservation-service-group",
+        group_id="order-service-group",
         bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
     )
 

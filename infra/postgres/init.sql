@@ -1,2 +1,3 @@
 CREATE DATABASE user_test_db;
 CREATE DATABASE event_db;
+CREATE DATABASE order_db;

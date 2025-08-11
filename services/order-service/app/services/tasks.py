@@ -3,14 +3,14 @@ import logging
 
 from app.core.celery_app import celery_app
 from app.core.kafka import get_kafka_producer_instance
-from app.events.publishers import ReservationEventPublisher
+from app.events.publishers import OrderEventPublisher
 
 logger = logging.getLogger(__name__)
 
 @celery_app.task
 def release_seat_task(event_id: int, seat_num: str, lock_key: str):
     """
-    A Celery task to publish a 'seat.release' event if a seat reservation expires.
+    A Celery task to publish a 'seat.release' event if a seat order expires.
     This task is intended to be called with a countdown.
     """
     try:
@@ -19,7 +19,7 @@ def release_seat_task(event_id: int, seat_num: str, lock_key: str):
         import asyncio
         async def send_event_async():
             producer = await get_kafka_producer_instance()
-            event_publisher = ReservationEventPublisher(producer)
+            event_publisher = OrderEventPublisher(producer)
             await event_publisher.publish_payment_timeout(
                 event_id=event_id,
                 seat_num=seat_num,
