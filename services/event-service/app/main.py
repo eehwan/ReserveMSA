@@ -42,3 +42,7 @@ app = FastAPI(root_path="/api-event", lifespan=lifespan)
 
 app.include_router(events_router, prefix="/events", tags=["events"])
 app.include_router(seats_router, prefix="/seats", tags=["seats"])
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}

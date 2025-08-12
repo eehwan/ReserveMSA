@@ -13,3 +13,7 @@ app = FastAPI(root_path="/api-user", lifespan=lifespan)
 
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
