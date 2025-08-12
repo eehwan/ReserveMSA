@@ -20,20 +20,20 @@ class EventRepository:
     async def create_event(self, event: EventCreate) -> Event:
         db_event = Event(**event.dict())
         self.db.add(db_event)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(db_event)
         return db_event
 
     async def update_event(self, event_id: int, event: EventUpdate) -> Event | None:
         query = update(Event).where(Event.id == event_id).values(**event.dict(exclude_unset=True))
         await self.db.execute(query)
-        await self.db.commit()
+        await self.db.flush()
         return await self.get_event(event_id)
 
     async def delete_event(self, event_id: int) -> bool:
         event = await self.get_event(event_id)
         if event:
             await self.db.delete(event)
-            await self.db.commit()
+            await self.db.flush()
             return True
         return False

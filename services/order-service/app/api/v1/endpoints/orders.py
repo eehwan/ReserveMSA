@@ -4,6 +4,7 @@ from aiokafka import AIOKafkaProducer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.db.repositories import OrderRepository
 from app.api.v1.schemas.order_schemas import OrderRequest, OrderResponse
 from app.api.v1.schemas.auth_schemas import TokenPayload
 from app.services.order_service import OrderService
@@ -70,7 +71,6 @@ async def get_user_orders(
 ):
     """사용자의 주문 목록 조회"""
     try:
-        from app.db.repositories import OrderRepository
         user_id = int(payload.sub)
         order_repo = OrderRepository(db)
         orders = await order_repo.get_orders_by_user(user_id)

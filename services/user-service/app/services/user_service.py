@@ -5,9 +5,16 @@ from app.api.v1.schemas import UserCreate, User
 class UserService:
     def __init__(self, db: AsyncSession):
         self.user_repo = UserRepository(db)
+        self.db = db
 
     async def create_user(self, user_data: UserCreate) -> User:
-        return await self.user_repo.create_user(user_data)
+        try:
+            user = await self.user_repo.create_user(user_data)
+            await self.db.commit()
+            return user
+        except Exception as e:
+            await self.db.rollback()
+            raise e
 
     async def get_user_by_id(self, user_id: int) -> User | None:
         return await self.user_repo.get_user_by_id(user_id)

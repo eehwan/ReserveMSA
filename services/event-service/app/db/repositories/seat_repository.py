@@ -20,11 +20,20 @@ class SeatRepository:
     async def get_seats(self, event_id: int, skip: int = 0, limit: int = 100) -> list[Seat]:
         result = await self.db.execute(select(Seat).filter(Seat.event_id == event_id).offset(skip).limit(limit))
         return result.scalars().all()
+    
+    async def get_seats_with_status(self, event_id: int, statuses: list[SeatStatus]) -> list[Seat]:
+        result = await self.db.execute(
+            select(Seat).filter(
+                Seat.event_id == event_id,
+                Seat.status.in_(statuses)
+            )
+        )
+        return result.scalars().all()
 
     async def create_seat(self, seat: SeatCreate) -> Seat:
         db_seat = Seat(**seat.dict())
         self.db.add(db_seat)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(db_seat)
         return db_seat
 
@@ -40,19 +49,19 @@ class SeatRepository:
             query = query.where(Seat.status == expected_status)
 
         result = await self.db.execute(query.values(**update_data))
-        await self.db.commit()
+        await self.db.flush()
         return result.rowcount
 
     async def update_seat(self, seat_id: int, seat: SeatUpdate) -> Seat | None:
         query = update(Seat).where(Seat.id == seat_id).values(**seat.dict(exclude_unset=True))
         await self.db.execute(query)
-        await self.db.commit()
+        await self.db.flush()
         return await self.get_seat(seat_id)
 
     async def delete_seat(self, seat_id: int) -> bool:
         seat = await self.get_seat(seat_id)
         if seat:
             await self.db.delete(seat)
-            await self.db.commit()
+            await self.db.flush()
             return True
         return False

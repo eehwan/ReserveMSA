@@ -13,7 +13,6 @@ from app.events.handlers import EventHandler
 from app.db.session import init_db, get_db
 
 from app.api.v1.endpoints.events import router as events_router
-from app.api.v1.endpoints.seats import router as seats_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,7 +40,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(root_path="/api-event", lifespan=lifespan)
 
 app.include_router(events_router, prefix="/events", tags=["events"])
-app.include_router(seats_router, prefix="/seats", tags=["seats"])
 
 @app.get("/health")
 def health_check():
