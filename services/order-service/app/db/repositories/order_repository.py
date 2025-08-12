@@ -38,7 +38,7 @@ class OrderRepository:
             expires_at=order_data.expires_at
         )
         self.db.add(db_order)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(db_order)
         return db_order
 
@@ -57,7 +57,7 @@ class OrderRepository:
 
         query = update(Order).where(Order.order_id == order_id)
         result = await self.db.execute(query.values(**update_data))
-        await self.db.commit()
+        await self.db.flush()
         return result.rowcount
 
     async def cancel_order(self, order_id: str) -> bool:
