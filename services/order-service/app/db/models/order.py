@@ -1,14 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy import Column, Integer, String, DateTime
 from datetime import datetime
-import enum
 
 from app.db.session import Base
-
-class OrderStatus(enum.Enum):
-    PENDING = "pending"         # 주문 생성됨 (결제 대기)
-    CONFIRMED = "confirmed"     # 결제 완료
-    CANCELLED = "cancelled"     # 취소됨
-    EXPIRED = "expired"         # 시간 초과로 만료
 
 class Order(Base):
     __tablename__ = "orders"
@@ -19,7 +12,6 @@ class Order(Base):
     event_id = Column(Integer, index=True)
     seat_num = Column(String)
     price = Column(Integer)  # 좌석 가격
-    status = Column(Enum(OrderStatus), default=OrderStatus.PENDING)
     lock_key = Column(String, nullable=True)  # Redis lock key
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

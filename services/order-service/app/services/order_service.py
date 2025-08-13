@@ -88,6 +88,7 @@ class OrderService:
                 detail=f"Failed to create order: {e}",
             )
 
+
     async def cancel_order(self, user_id: int, event_id: int, seat_num: str) -> None:
         redis_key = f"seat:{event_id}:{seat_num}"
         lock_value = await self.redis_client.get(redis_key)
@@ -109,25 +110,17 @@ class OrderService:
             )
 
         try:
-            cancel_result = await self.order_repo.cancel_order(stored_order_id)
-            if not cancel_result:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Order not found in database.",
-                )
-            
+            # Redis 락 해제
             await self.redis_client.delete(redis_key)
 
+            # Event Service에 좌석 해제 이벤트 발행
             await self.event_publisher.publish_seat_unlock(
                 event_id=event_id,
                 seat_num=seat_num,
                 lock_key=lock_value_str
             )
             
-            await self.order_repo.db.commit()
-            
         except Exception as e:
-            await self.order_repo.db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to cancel order or publish unlock event: {e}",

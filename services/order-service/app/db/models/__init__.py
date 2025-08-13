@@ -1,3 +1,3 @@
-from .order import Order, OrderStatus
+from .order import Order
 
-__all__ = ["Order", "OrderStatus"]
+__all__ = ["Order"]

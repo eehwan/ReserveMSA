@@ -3,7 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy import update
 from datetime import datetime
 
-from app.db.models import Order, OrderStatus
+from app.db.models import Order
 from app.api.v1.schemas import OrderCreate
 
 class OrderRepository:
@@ -33,7 +33,6 @@ class OrderRepository:
             event_id=order_data.event_id,
             seat_num=order_data.seat_num,
             price=order_data.price,
-            status=OrderStatus.PENDING,
             lock_key=order_data.lock_key,
             expires_at=order_data.expires_at
         )
@@ -42,32 +41,15 @@ class OrderRepository:
         await self.db.refresh(db_order)
         return db_order
 
-    async def update_order_status(
-        self,
-        order_id: str,
-        new_status: OrderStatus,
-        payment_key: str = None
-    ) -> int:
+    async def update_payment_key(self, order_id: str, payment_key: str) -> bool:
+        """
+        결제 완료 시 payment_key 업데이트
+        """
         update_data = {
-            "status": new_status,
+            "payment_key": payment_key,
             "updated_at": datetime.utcnow()
         }
-        if payment_key:
-            update_data["payment_key"] = payment_key
-
         query = update(Order).where(Order.order_id == order_id)
         result = await self.db.execute(query.values(**update_data))
         await self.db.flush()
-        return result.rowcount
-
-    async def cancel_order(self, order_id: str) -> bool:
-        result = await self.update_order_status(order_id, OrderStatus.CANCELLED)
-        return result > 0
-
-    async def expire_order(self, order_id: str) -> bool:
-        result = await self.update_order_status(order_id, OrderStatus.EXPIRED)
-        return result > 0
-
-    async def confirm_order(self, order_id: str, payment_key: str) -> bool:
-        result = await self.update_order_status(order_id, OrderStatus.CONFIRMED, payment_key)
-        return result > 0
+        return result.rowcount > 0

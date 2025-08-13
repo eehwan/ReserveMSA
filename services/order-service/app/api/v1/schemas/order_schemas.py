@@ -1,7 +1,6 @@
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
-from app.db.models import OrderStatus
 
 # 기본 스키마
 class OrderBase(BaseModel):
@@ -32,7 +31,6 @@ class OrderCreate(OrderBase):
 
 class OrderUpdate(OrderBase):
     """주문 업데이트용 스키마"""
-    status: Optional[OrderStatus] = None
     payment_key: Optional[str] = None
 
 
@@ -42,7 +40,6 @@ class Order(OrderBase):
     order_id: str
     user_id: int
     price: int
-    status: OrderStatus
     lock_key: str
     created_at: datetime
     updated_at: datetime

@@ -9,7 +9,7 @@ from app.core.kafka import (
     start_kafka_consumers,
     stop_kafka_consumers
 )
-from app.db.session import init_db
+from app.db.session import init_db, get_db
 from app.events.handlers import OrderEventHandler
 from app.core.redis import get_redis_client_instance, close_redis_client_instance
 from app.api.v1.endpoints import orders
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     kafka_producer_instance = await get_kafka_producer_instance()
     redis_client = await get_redis_client_instance()
     
-    event_handler = OrderEventHandler(kafka_producer_instance, redis_client)
+    event_handler = OrderEventHandler(kafka_producer_instance, redis_client, get_db)
     topic_handlers = {
         "seat_lock_rollback": event_handler.handle_seat_lock_rollback,
     }
