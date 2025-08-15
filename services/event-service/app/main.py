@@ -12,7 +12,7 @@ from app.core.kafka import (
 from app.events.handlers import EventHandler
 from app.db.session import init_db, get_db
 
-from app.api.v1.endpoints.events import router as events_router
+from app.api.v1.endpoints import events
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(root_path="/api-event", lifespan=lifespan)
 
-app.include_router(events_router, prefix="/events", tags=["events"])
+app.include_router(events.router, prefix="/events", tags=["events"])
 
 @app.get("/health")
 def health_check():

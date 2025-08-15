@@ -35,11 +35,11 @@ async def make_order(
         raise e
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {e}",
         )
 
-@router.delete("/", status_code=200)
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_order(
     order_request: OrderRequest,
     payload: TokenPayload = Depends(get_token_payload),
@@ -60,7 +60,7 @@ async def cancel_order(
         raise e
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {e}",
         )
 

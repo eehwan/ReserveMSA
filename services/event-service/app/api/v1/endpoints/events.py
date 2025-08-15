@@ -37,9 +37,7 @@ async def update_event(event_id: int, event_update: EventUpdate, db: AsyncSessio
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event(event_id: int, db: AsyncSession = Depends(get_db)):
     event_service = EventService(db)
-    deleted = await event_service.delete_event(event_id)
-    if not deleted:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete event: some seats are not AVAILABLE or event not found")
+    await event_service.delete_event(event_id)
     return
 
 
