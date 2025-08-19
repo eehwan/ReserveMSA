@@ -101,6 +101,23 @@ services:
       - kafka1
       - kafka2
 
+  payment-service:
+    build:
+      context: ./services
+      dockerfile: ./Dockerfile.dev
+      args:
+        SERVICE_NAME: payment-service
+    env_file:
+      - .env
+    volumes:
+      - ./services/payment-service/:/app
+      - ./libs:/app/libs
+    ports:
+      - "8004:8000"  # 개발용 직접 접근
+    depends_on:
+      - kafka1
+      - kafka2
+
   nginx:
     build: ./infra/nginx
     ports:
@@ -109,3 +126,4 @@ services:
       - user-service
       - event-service
       - order-service
+      - payment-service

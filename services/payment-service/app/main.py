@@ -1,0 +1,44 @@
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from app.core.kafka import (
+    start_kafka_producer,
+    close_kafka_producer_instance, 
+    get_kafka_producer_instance,
+    initialize_consumer_manager,
+    start_kafka_consumers,
+    stop_kafka_consumers
+)
+from app.events.handlers import PaymentEventHandler
+from app.db.session import init_db, get_db
+from app.api.v1.endpoints.payments import router as payments_router
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # DB 초기화
+    await init_db()
+    
+    # Kafka 시작
+    await start_kafka_producer()
+
+    kafka_producer_instance = await get_kafka_producer_instance()
+    
+    # Create event handler and topic handlers
+    event_handler = PaymentEventHandler(kafka_producer_instance, get_db)
+    topic_handlers = {
+        "payment_requested": event_handler.handle_payment_requested,
+    }
+    
+    await initialize_consumer_manager(topic_handlers)
+    await start_kafka_consumers()
+    yield
+    await stop_kafka_consumers()
+    await close_kafka_producer_instance()
+
+app = FastAPI(root_path="/api-payment", lifespan=lifespan)
+
+app.include_router(payments_router, prefix="/payments", tags=["payments"])
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
