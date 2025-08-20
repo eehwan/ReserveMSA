@@ -2,10 +2,10 @@ import uuid
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiokafka import AIOKafkaProducer
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from app.api.v1.schemas.payment_schemas import PaymentWebhookResponse, PaymentStatusResponse
-from app.db.repositories import PaymentRepository
+from app.db.repositories.payment_repository import PaymentRepository
 from app.db.models import PaymentStatus
 from app.core.config import settings
 

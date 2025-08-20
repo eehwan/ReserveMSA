@@ -15,10 +15,7 @@ from app.api.v1.endpoints.payments import router as payments_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # DB 초기화
     await init_db()
-    
-    # Kafka 시작
     await start_kafka_producer()
 
     kafka_producer_instance = await get_kafka_producer_instance()

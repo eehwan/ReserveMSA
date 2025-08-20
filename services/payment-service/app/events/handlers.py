@@ -15,18 +15,24 @@ class PaymentEventHandler:
             event_data = json.loads(message.value.decode('utf-8'))
             print(f"Received payment_requested event: {event_data}")
             
-            order_id = event_data.get("order_id")
-            amount = event_data.get("amount", 50000)  # 기본값
+            user_id = event_data.get("user_id")
+            event_id = event_data.get("event_id") 
+            seat_num = event_data.get("seat_num")
+            amount = int(event_data.get("amount", 50000))
+            lock_key = event_data.get("lock_key")
             
-            if not order_id:
-                print("Error: order_id not found in payment_requested event")
+            if not all([user_id, event_id, seat_num, lock_key]):
+                print("Error: Required fields missing in payment_requested event")
                 return
+            
+            # order_id를 lock_key에서 추출 (format: "user_id:order_id")
+            order_id = lock_key.split(":")[1] if ":" in lock_key else lock_key
             
             # DB 세션 생성하여 결제 정보 저장
             async for db_session in self.db_session_factory():
                 payment_service = PaymentService(db_session, self.kafka_producer)
                 payment_key = await payment_service.handle_payment_requested(order_id, amount)
-                print(f"Created payment_key: {payment_key} for order_id: {order_id}")
+                print(f"Created payment_key: {payment_key} for order_id: {order_id}, amount: {amount}")
                 
         except Exception as e:
             print(f"Error handling payment_requested event: {e}")
