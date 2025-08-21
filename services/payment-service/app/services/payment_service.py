@@ -15,13 +15,19 @@ class PaymentService:
         self.kafka_producer = kafka_producer
         self.payment_repo = PaymentRepository(db)
 
-    async def handle_payment_requested(self, order_id: str, amount: int) -> str:
+    async def handle_payment_requested(self, order_id: str, amount: int, event_id: int = None, seat_num: str = None) -> str:
         """payment_requested 이벤트 처리 - 결제 키 생성 및 DB 저장"""
         try:
             payment_key = f"payment_{uuid.uuid4().hex[:12]}"
             
             # DB에 결제 정보 저장
-            await self.payment_repo.create_payment(payment_key, order_id, amount)
+            await self.payment_repo.upsert_payment(
+                payment_key=payment_key, 
+                order_id=order_id, 
+                amount=amount,
+                event_id=event_id,
+                seat_num=seat_num
+            )
             await self.db.commit()
             
             return payment_key
@@ -60,10 +66,12 @@ class PaymentService:
                     approved_at=datetime.now()
                 )
                 
-                # payment.verified 이벤트 발행
+                # payment.verified 이벤트 발행 (좌석 정보 포함)
                 await self._publish_payment_event("payment.verified", {
                     "payment_key": payment_key,
                     "order_id": order_id,
+                    "event_id": payment.event_id,
+                    "seat_num": payment.seat_num,
                     "amount": webhook_data["amount"],
                     "approved_at": datetime.now().isoformat()
                 })

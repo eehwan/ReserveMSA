@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
         "seat_unlock": event_handler.handle_seat_unlock,
         "seat_sold": event_handler.handle_seat_sold,
         "payment_timeout": event_handler.handle_payment_timeout,
+        "payment_verified": event_handler.handle_payment_verified,
     }
     
     await initialize_consumer_manager(topic_handlers)

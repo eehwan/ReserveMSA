@@ -64,6 +64,16 @@ class OrderService:
                 lock_key=lock_value,
                 expires_at=expires_at
             )
+            
+            # Payment Service에 결제 준비 요청
+            await self.event_publisher.publish_payment_requested(
+                order_id=order_id,
+                user_id=user_id,
+                event_id=event_id,
+                seat_num=seat_num,
+                amount=50000.0,  # TODO: Event Service에서 실제 가격 조회
+                lock_key=lock_value
+            )
 
             release_seat_task.apply_async(
                 args=[event_id, seat_num, lock_value],
@@ -76,8 +86,7 @@ class OrderService:
                 order_id=order_id,
                 event_id=event_id,
                 seat_num=seat_num,
-                expires_at=expires_at,
-                status="reserved"
+                expires_at=expires_at
             )
 
         except Exception as e:

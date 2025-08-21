@@ -4,7 +4,8 @@ from shared.kafka.topics import (
     SeatLockEvent, 
     SeatLockFailedEvent, 
     SeatUnlockEvent, 
-    PaymentTimeoutEvent
+    PaymentTimeoutEvent,
+    PaymentRequestedEvent
 )
 from datetime import datetime
 
@@ -67,5 +68,20 @@ class OrderEventPublisher:
         )
         await self.kafka_producer.send(
             topic=TOPICS["payment_timeout"]["topic"],
+            message=event.model_dump(mode="json")
+        )
+    
+    async def publish_payment_requested(self, order_id: str, user_id: int, event_id: int, seat_num: str, amount: float, lock_key: str):
+        """결제 요청 이벤트 발행"""
+        event = PaymentRequestedEvent(
+            user_id=user_id,
+            event_id=event_id,
+            seat_num=seat_num,
+            amount=amount,
+            lock_key=lock_key,
+            timestamp=datetime.utcnow(),
+        )
+        await self.kafka_producer.send(
+            topic=TOPICS["payment_requested"]["topic"],
             message=event.model_dump(mode="json")
         )

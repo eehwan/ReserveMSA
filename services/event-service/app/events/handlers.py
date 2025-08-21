@@ -12,6 +12,7 @@ from shared.kafka.topics import (
     SeatSoldEvent,
     PaymentTimeoutEvent,
     PaymentRequestedEvent,
+    PaymentVerifiedEvent,
     SeatLockRollbackEvent,
 )
 
@@ -89,3 +90,18 @@ class EventHandler:
             seat_service = SeatService(db_session)
             # DB 상태를 ALLOCATED → AVAILABLE로 변경
             await seat_service.release_seat(event.event_id, event.seat_num, event.lock_key)
+
+    async def handle_payment_verified(self, event: PaymentVerifiedEvent):
+        """결제 완료 이벤트 처리 - 좌석 상태를 SOLD로 변경"""
+        logger.info(f"[Payment Verified] Event: {event.event_id}, Seat: {event.seat_num}, Order: {event.order_id}")
+        
+        try:
+            async for db_session in self.db_session_factory():
+                seat_service = SeatService(db_session)
+                # 좌석 상태를 ALLOCATED → SOLD로 변경
+                await seat_service.sell_seat(event.event_id, event.seat_num, event.payment_key)
+                logger.info(f"Seat {event.seat_num} marked as SOLD for payment {event.payment_key}")
+                
+        except Exception as e:
+            logger.error(f"Failed to mark seat as sold for order {event.order_id}: {e}")
+            # TODO: 실패 시 보상 패턴 추가 (payment.cancel 이벤트 발행)

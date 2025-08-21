@@ -115,6 +115,7 @@ services:
     ports:
       - "8004:8000"  # 개발용 직접 접근
     depends_on:
+      - postgreSQL
       - kafka1
       - kafka2
 

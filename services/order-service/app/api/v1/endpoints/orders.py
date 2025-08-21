@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from redis.asyncio import Redis
 from aiokafka import AIOKafkaProducer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -78,7 +78,6 @@ async def get_user_orders(
         return [
             OrderResponse(
                 order_id=order.order_id,
-                status=order.status.value,
                 event_id=order.event_id,
                 seat_num=order.seat_num,
                 expires_at=order.expires_at

@@ -18,7 +18,6 @@ class OrderResponse(OrderBase):
     """주문 생성/조회 API 응답 스키마"""
     order_id: str
     expires_at: datetime
-    status: str
 
 # DB 저장용 스키마
 class OrderCreate(OrderBase):

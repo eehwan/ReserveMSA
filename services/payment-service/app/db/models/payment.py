@@ -18,6 +18,9 @@ class Payment(Base):
     order_id = Column(String, index=True)  # 주문 ID
     amount = Column(Integer)  # 결제 금액
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
+
+    event_id = Column(Integer)  # 이벤트 ID
+    seat_num = Column(String)   # 좌석 번호
     
     # PG사 관련 정보
     imp_uid = Column(String, nullable=True)  # PG사 거래 ID
